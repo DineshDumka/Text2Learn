@@ -11,13 +11,15 @@ const prismaClientPath = path.join(__dirname, 'node_modules', '.prisma', 'client
 
 console.log('🧹 Cleaning up Prisma binaries...');
 
-// List of binaries to remove (anything that's not debian-openssl-3.0.x)
+// List of binaries to remove (anything that's not debian-openssl)
 const binariesToRemove = [
   'libquery_engine-linux-musl.so.node',
   'libquery_engine-linux-musl-openssl-3.0.x.so.node',
+  'libquery_engine-linux-musl-openssl-1.1.x.so.node',
   'libquery_engine-linux-arm64-openssl-3.0.x.so.node',
   'query_engine-linux-musl',
   'query_engine-linux-musl-openssl-3.0.x',
+  'query_engine-linux-musl-openssl-1.1.x',
 ];
 
 let removed = 0;

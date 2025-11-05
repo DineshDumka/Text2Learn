@@ -18,8 +18,6 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 7d
-      - key: PRISMA_QUERY_ENGINE_LIBRARY
-        value: ./node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node
       - key: CLIENT_URL
         sync: false
       - key: GEMINI_API_KEY
