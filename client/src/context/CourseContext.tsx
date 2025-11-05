@@ -1,0 +1,146 @@
+/**
+ * Course Context Provider
+ * Manages course generation and storage
+ */
+
+import { createContext, useContext, useState, ReactNode } from 'react'
+import api, { getErrorMessage } from '../utils/api'
+import { 
+  Course, 
+  CourseOutline, 
+  LessonContent, 
+  GenerateCourseRequest,
+  GenerateLessonRequest,
+  ApiResponse 
+} from '../types'
+
+interface CourseContextType {
+  courses: Course[]
+  currentCourse: Course | null
+  loading: boolean
+  generateCourse: (topic: string, moduleCount?: number, lessonCount?: number) => Promise<CourseOutline>
+  generateLesson: (req: GenerateLessonRequest) => Promise<LessonContent>
+  saveCourse: (outline: CourseOutline) => Promise<Course>
+  fetchCourses: () => Promise<void>
+  fetchCourse: (courseId: string) => Promise<Course>
+  deleteCourse: (courseId: string) => Promise<void>
+  setCurrentCourse: (course: Course | null) => void
+}
+
+const CourseContext = createContext<CourseContextType | undefined>(undefined)
+
+export const useCourse = () => {
+  const context = useContext(CourseContext)
+  if (!context) {
+    throw new Error('useCourse must be used within CourseProvider')
+  }
+  return context
+}
+
+export const CourseProvider = ({ children }: { children: ReactNode }) => {
+  const [courses, setCourses] = useState<Course[]>([])
+  const [currentCourse, setCurrentCourse] = useState<Course | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const generateCourse = async (
+    topic: string,
+    moduleCount = 5,
+    lessonCount = 4
+  ): Promise<CourseOutline> => {
+    try {
+      setLoading(true)
+      const response = await api.post<ApiResponse<CourseOutline>>('/generate/course', {
+        topic,
+        moduleCount,
+        lessonCount,
+      } as GenerateCourseRequest)
+
+      return response.data.data!
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const generateLesson = async (req: GenerateLessonRequest): Promise<LessonContent> => {
+    try {
+      setLoading(true)
+      const response = await api.post<ApiResponse<LessonContent>>('/generate/lesson', req)
+      return response.data.data!
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveCourse = async (outline: CourseOutline): Promise<Course> => {
+    try {
+      const response = await api.post<ApiResponse<Course>>('/courses', {
+        title: outline.title,
+        description: outline.description,
+        outline,
+      })
+      
+      const newCourse = response.data.data!
+      setCourses([newCourse, ...courses])
+      return newCourse
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    }
+  }
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get<ApiResponse<Course[]>>('/courses')
+      setCourses(response.data.data || [])
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchCourse = async (courseId: string): Promise<Course> => {
+    try {
+      setLoading(true)
+      const response = await api.get<ApiResponse<Course>>(`/courses/${courseId}`)
+      const course = response.data.data!
+      setCurrentCourse(course)
+      return course
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const deleteCourse = async (courseId: string) => {
+    try {
+      await api.delete(`/courses/${courseId}`)
+      setCourses(courses.filter((c) => c.id !== courseId))
+      if (currentCourse?.id === courseId) {
+        setCurrentCourse(null)
+      }
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    }
+  }
+
+  const value: CourseContextType = {
+    courses,
+    currentCourse,
+    loading,
+    generateCourse,
+    generateLesson,
+    saveCourse,
+    fetchCourses,
+    fetchCourse,
+    deleteCourse,
+    setCurrentCourse,
+  }
+
+  return <CourseContext.Provider value={value}>{children}</CourseContext.Provider>
+}
