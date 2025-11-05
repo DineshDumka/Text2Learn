@@ -227,12 +227,3 @@ VITE_CLIENT_URL=https://your-app.vercel.app
 docker-compose up -d
 ```
 
-All services (backend, frontend, database) can run in Docker.
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
-## 👥 Authors
-
-Built with ❤️ using Windsurf AI
