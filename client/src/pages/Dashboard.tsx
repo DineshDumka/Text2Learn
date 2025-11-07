@@ -13,7 +13,7 @@ import toast, { Toaster } from 'react-hot-toast'
 const Dashboard = () => {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
-  const { courses, generateCourse, saveCourse, fetchCourses, deleteCourse, shareCourse, translateCourse, loading } = useCourse()
+  const { courses, generateCourse, saveCourse, fetchCourses, deleteCourse, shareCourse, loading } = useCourse()
   const [topic, setTopic] = useState('')
   const [error, setError] = useState('')
   const [generatedOutline, setGeneratedOutline] = useState<any>(null)
