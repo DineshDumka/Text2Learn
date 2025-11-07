@@ -7,7 +7,7 @@ import { Response, Request } from 'express';
 import { AuthRequest } from '../types';
 import { prisma } from '../utils/prisma';
 import { translateCourse } from '../services/gemini.service';
-// import { randomBytes } from 'crypto'; // Disabled temporarily
+import { randomBytes } from 'crypto';
 
 /**
  * Create a new course
@@ -318,23 +318,93 @@ export const saveLesson = async (req: AuthRequest, res: Response): Promise<void>
 /**
  * Generate a public share link for a course
  */
-export const shareCourse = async (_req: AuthRequest, res: Response): Promise<void> => {
-  // TEMPORARILY DISABLED: Requires shareId column in database
-  res.status(503).json({
-    success: false,
-    message: 'Share feature is temporarily disabled. Database migration required.'
-  });
+export const shareCourse = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, message: 'Not authenticated' });
+      return;
+    }
+
+    const { id } = req.params;
+
+    // Verify course ownership
+    const course = await prisma.course.findFirst({
+      where: {
+        id,
+        userId: req.user.userId
+      }
+    });
+
+    if (!course) {
+      res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+      return;
+    }
+
+    // Generate unique shareId if not exists
+    let shareId = course.shareId;
+    if (!shareId) {
+      shareId = randomBytes(16).toString('hex');
+      await prisma.course.update({
+        where: { id },
+        data: { shareId }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { shareId },
+      message: 'Share link generated successfully'
+    });
+  } catch (error) {
+    console.error('Share course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate share link'
+    });
+  }
 };
 
 /**
  * Get a shared course by shareId (public, no auth required)
  */
-export const getSharedCourse = async (_req: Request, res: Response): Promise<void> => {
-  // TEMPORARILY DISABLED: Requires shareId column in database
-  res.status(503).json({
-    success: false,
-    message: 'Share feature is temporarily disabled. Database migration required.'
-  });
+export const getSharedCourse = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { shareId } = req.params;
+
+    const course = await prisma.course.findUnique({
+      where: { shareId },
+      include: {
+        lessons: {
+          orderBy: [
+            { moduleIndex: 'asc' },
+            { lessonIndex: 'asc' }
+          ]
+        }
+      }
+    });
+
+    if (!course) {
+      res.status(404).json({
+        success: false,
+        message: 'Shared course not found'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: course
+    });
+  } catch (error) {
+    console.error('Get shared course error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch shared course'
+    });
+  }
 };
 
 /**
@@ -389,13 +459,14 @@ export const translateCourseToLanguage = async (req: AuthRequest, res: Response)
     console.log(`📝 Translating course to ${language}...`);
     const translatedOutline = await translateCourse(course.outline, language);
 
-    // Update course with translated content (without language field)
+    // Update course with translated content
     const updatedCourse = await prisma.course.update({
       where: { id },
       data: {
         title: translatedOutline.title || course.title,
         description: translatedOutline.description || course.description,
-        outline: translatedOutline
+        outline: translatedOutline,
+        language: language
       }
     });
 

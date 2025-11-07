@@ -32,11 +32,14 @@ model Course {
   title       String
   description String   @db.Text
   outline     Json     // Stores CourseOutline as JSON
+  shareId     String?  @unique // Unique ID for public sharing
+  language    String?  @default("en") // Course language (en, hi, es, fr, de)
   lessons     Lesson[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+  @@index([shareId])
   @@map("courses")
 }
 
