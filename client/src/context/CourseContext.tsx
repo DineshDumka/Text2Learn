@@ -21,10 +21,13 @@ interface CourseContextType {
   generateCourse: (topic: string, moduleCount?: number, lessonCount?: number) => Promise<CourseOutline>
   generateLesson: (req: GenerateLessonRequest) => Promise<LessonContent>
   saveCourse: (outline: CourseOutline) => Promise<Course>
-  fetchCourses: () => Promise<void>
+  fetchCourses: (searchQuery?: string) => Promise<void>
   fetchCourse: (courseId: string) => Promise<Course>
   deleteCourse: (courseId: string) => Promise<void>
   setCurrentCourse: (course: Course | null) => void
+  shareCourse: (courseId: string) => Promise<string>
+  fetchSharedCourse: (shareId: string) => Promise<Course>
+  translateCourse: (courseId: string, language: string) => Promise<Course>
 }
 
 const CourseContext = createContext<CourseContextType | undefined>(undefined)
@@ -91,10 +94,11 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (searchQuery?: string) => {
     try {
       setLoading(true)
-      const response = await api.get<ApiResponse<Course[]>>('/courses')
+      const url = searchQuery ? `/courses?q=${encodeURIComponent(searchQuery)}` : '/courses'
+      const response = await api.get<ApiResponse<Course[]>>(url)
       setCourses(response.data.data || [])
     } catch (error) {
       throw new Error(getErrorMessage(error))
@@ -129,6 +133,47 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const shareCourse = async (courseId: string): Promise<string> => {
+    try {
+      const response = await api.post<ApiResponse<{ shareId: string }>>(`/courses/${courseId}/share`)
+      return response.data.data!.shareId
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    }
+  }
+
+  const fetchSharedCourse = async (shareId: string): Promise<Course> => {
+    try {
+      setLoading(true)
+      const response = await api.get<ApiResponse<Course>>(`/courses/share/${shareId}`)
+      return response.data.data!
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const translateCourse = async (courseId: string, language: string): Promise<Course> => {
+    try {
+      setLoading(true)
+      const response = await api.post<ApiResponse<Course>>(`/courses/${courseId}/translate?language=${language}`)
+      const translatedCourse = response.data.data!
+      
+      // Update the course in the list
+      setCourses(courses.map(c => c.id === courseId ? translatedCourse : c))
+      if (currentCourse?.id === courseId) {
+        setCurrentCourse(translatedCourse)
+      }
+      
+      return translatedCourse
+    } catch (error) {
+      throw new Error(getErrorMessage(error))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const value: CourseContextType = {
     courses,
     currentCourse,
@@ -140,6 +185,9 @@ export const CourseProvider = ({ children }: { children: ReactNode }) => {
     fetchCourse,
     deleteCourse,
     setCurrentCourse,
+    shareCourse,
+    fetchSharedCourse,
+    translateCourse,
   }
 
   return <CourseContext.Provider value={value}>{children}</CourseContext.Provider>

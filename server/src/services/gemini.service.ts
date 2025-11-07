@@ -324,3 +324,56 @@ Return only the Hinglish translation, no explanations.`;
     return englishText; // Fallback to original text
   }
 };
+
+/**
+ * Translate course to target language
+ */
+export const translateCourse = async (
+  courseData: any,
+  targetLanguage: string
+): Promise<any> => {
+  const languageMap: { [key: string]: string } = {
+    en: 'English',
+    hi: 'Hindi',
+    es: 'Spanish',
+    fr: 'French',
+    de: 'German'
+  };
+
+  const targetLangName = languageMap[targetLanguage] || targetLanguage;
+
+  const prompt = `Translate the following course structure into ${targetLangName}. 
+Maintain the exact JSON structure and formatting. Only translate the text content (title, description, lesson names), keep all field names in English.
+
+${JSON.stringify(courseData, null, 2)}
+
+Return ONLY the translated JSON object with no explanations or markdown:`;
+
+  try {
+    if (!GEMINI_API_KEY) {
+      throw new Error('Gemini API key not configured');
+    }
+
+    console.log(`🌐 Translating course to ${targetLangName}...`);
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const text = response.text();
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error('❌ Failed to extract JSON from translation response');
+      throw new Error('Failed to extract JSON from translation response');
+    }
+
+    const translatedData = JSON.parse(jsonMatch[0]);
+    console.log(`✅ Course translated to ${targetLangName}`);
+    return translatedData;
+  } catch (error: any) {
+    console.error('❌ Translation error:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to translate course');
+  }
+};

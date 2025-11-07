@@ -45,13 +45,36 @@ api.interceptors.response.use(
 export const getErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
     const apiError = error as AxiosError<ApiResponse>
+    
+    // Try to get detailed error from response
     if (apiError.response?.data?.message) {
-      return apiError.response.data.message
+      const baseMessage = apiError.response.data.message
+      // @ts-ignore - error field might exist
+      const errorDetail = apiError.response.data?.error
+      // @ts-ignore - details field might exist
+      const details = apiError.response.data?.details
+      
+      // If there are details (like database schema errors), show them
+      if (details && details.fix) {
+        return `${baseMessage}\n\nSolution: ${details.fix}`
+      }
+      
+      if (errorDetail && errorDetail !== baseMessage) {
+        return `${baseMessage}\n${errorDetail}`
+      }
+      return baseMessage
     }
+    
     if (apiError.response?.data?.errors && apiError.response.data.errors.length > 0) {
       return apiError.response.data.errors[0].msg
     }
-    return apiError.message
+    
+    // Network or server errors
+    if (apiError.code === 'ERR_NETWORK') {
+      return 'Network error: Unable to connect to server. Please check if the backend is running.'
+    }
+    
+    return apiError.message || 'An unexpected error occurred'
   }
   if (error instanceof Error) {
     return error.message

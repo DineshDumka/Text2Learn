@@ -9,13 +9,19 @@ import {
   getUserCourses,
   getCourse,
   deleteCourse,
-  saveLesson
+  saveLesson,
+  shareCourse,
+  getSharedCourse,
+  translateCourseToLanguage
 } from '../controllers/course.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-// All course routes require authentication
+// Public routes (no auth required)
+router.get('/share/:shareId', getSharedCourse);
+
+// Authenticated routes
 router.use(authMiddleware);
 
 router.post('/', createCourse);
@@ -23,5 +29,7 @@ router.get('/', getUserCourses);
 router.get('/:id', getCourse);
 router.delete('/:id', deleteCourse);
 router.post('/:id/lessons', saveLesson);
+router.post('/:id/share', shareCourse);
+router.post('/:id/translate', translateCourseToLanguage);
 
 export default router;

@@ -81,6 +81,10 @@ npm run dev
 - ✅ **PDF Export** - Download lessons as PDF
 - ✅ **User Authentication** - Secure JWT-based auth
 - ✅ **Course Management** - Save and revisit courses anytime
+- ✅ **Multi-Language Translation** - Translate courses to Hindi, Spanish, French, German
+- ✅ **Course Sharing** - Share courses publicly via unique links
+- ✅ **Search Functionality** - Quickly find courses in your dashboard
+- ✅ **Dark ChatGPT Theme** - Modern, sleek dark interface
 
 ## 📚 API Documentation
 
@@ -93,12 +97,34 @@ npm run dev
 - `POST /api/generate/lesson` - Generate lesson content
 
 ### Course Management
-- `GET /api/courses` - Get user's courses
+- `GET /api/courses` - Get user's courses (supports `?q=search` query)
 - `GET /api/courses/:id` - Get specific course
 - `DELETE /api/courses/:id` - Delete course
+- `POST /api/courses/:id/share` - Generate public share link
+- `POST /api/courses/:id/translate?language=hi` - Translate course to another language
+- `GET /api/courses/share/:shareId` - Get publicly shared course (no auth required)
 
 ### YouTube
 - `GET /api/youtube/search` - Search YouTube videos
+
+### New Features Usage
+
+#### 🌐 Translate a Course
+1. Open any saved course
+2. Click the "🌍 Translate" button in the header
+3. Select your target language (English, Hindi, Spanish, French, German)
+4. The entire course will be translated using AI
+
+#### 🔗 Share a Course
+1. In your dashboard, hover over a course card
+2. Click the share icon
+3. Copy the generated public link
+4. Share with anyone - no login required to view
+
+#### 🔍 Search Courses
+- Use the search bar in the dashboard sidebar
+- Search by course title or description
+- Results filter in real-time
 
 ## 🔐 Environment Variables
 

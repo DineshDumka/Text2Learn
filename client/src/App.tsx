@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Dashboard from './pages/Dashboard'
 import LessonView from './pages/LessonView'
+import SharedCourse from './pages/SharedCourse'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/share/:shareId" element={<SharedCourse />} />
             <Route
               path="/dashboard"
               element={
