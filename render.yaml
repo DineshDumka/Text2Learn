@@ -5,7 +5,7 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: cd server && npm install --omit=optional && npx prisma generate && node cleanup-prisma.js && npm run build
+    buildCommand: cd server && npm ci --include=dev && npx prisma generate && npm run build
     startCommand: cd server && npm run start
     envVars:
       - key: NODE_ENV
