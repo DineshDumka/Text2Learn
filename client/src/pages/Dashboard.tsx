@@ -128,20 +128,6 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* New Course Button */}
-        <div className="p-4 border-b border-[#30363d]">
-          <button 
-            onClick={() => {
-              setGeneratedOutline(null)
-              setTopic('')
-            }}
-            className="btn-primary w-full flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            New Course
-          </button>
-        </div>
-
         {/* Search Bar */}
         <div className="p-4 border-b border-[#30363d]">
           <div className="relative">
